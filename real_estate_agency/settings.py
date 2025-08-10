@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+    'phonenumber_field',
     'property.apps.PropertyConfig',
 ]
 
