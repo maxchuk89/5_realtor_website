@@ -12,9 +12,20 @@ def normalize_phones(apps, schema_editor):
         .exclude(owners_phonenumber="")
         .iterator()
     )
+
     for flat in qs:
-        parsed = phonenumbers.parse(flat.owners_phonenumber, "RU")
-        flat.owner_pure_phone = format_number(parsed, PhoneNumberFormat.E164)
+        try:
+            parsed = phonenumbers.parse(flat.owners_phonenumber, "RU")
+        except phonenumbers.NumberParseException:
+            flat.owner_pure_phone = None
+            flat.save(update_fields=["owner_pure_phone"])
+            continue
+
+        if phonenumbers.is_valid_number(parsed):
+            flat.owner_pure_phone = format_number(parsed, PhoneNumberFormat.E164)
+        else:
+            flat.owner_pure_phone = None
+
         flat.save(update_fields=["owner_pure_phone"])
 
 
