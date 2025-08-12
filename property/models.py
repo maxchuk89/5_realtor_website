@@ -1,40 +1,124 @@
-from django.db import models
-from django.utils import timezone
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Flat(models.Model):
-    created_at = models.DateTimeField('Когда создано объявление', default=timezone.now, db_index=True)
+    created_at = models.DateTimeField(
+        'Когда создано объявление',
+        auto_now_add=True
+    )
     description = models.TextField('Текст объявления', blank=True)
     price = models.IntegerField('Цена квартиры', db_index=True)
-    town = models.CharField('Город, где находится квартира', max_length=50, db_index=True)
-    town_district = models.CharField('Район города, где находится квартира', max_length=50, blank=True, help_text='Чертаново Южное')
-    address = models.TextField('Адрес квартиры', help_text='ул. Подольских курсантов д.5 кв.4')
-    floor = models.CharField('Этаж', max_length=3, help_text='Первый этаж, последний этаж, пятый этаж')
-    rooms_number = models.IntegerField('Количество комнат в квартире', db_index=True)
-    living_area = models.IntegerField('количество жилых кв.метров', null=True, blank=True, db_index=True)
-    has_balcony = models.BooleanField('Наличие балкона', null=True, blank=True, db_index=True)
-    active = models.BooleanField('Активно-ли объявление', db_index=True)
-    construction_year = models.IntegerField('Год постройки здания', null=True, blank=True, db_index=True)
-    new_building = models.BooleanField('Новостройка', null=True, blank=True)
-    likes = models.ManyToManyField(User, related_name='liked_flats', verbose_name='Лайки', blank=True)
+
+    town = models.CharField('Город', max_length=50, db_index=True)
+    town_district = models.CharField(
+        'Район города',
+        max_length=50,
+        blank=True,
+        help_text='Чертаново Южное'
+    )
+    address = models.TextField('Адрес', blank=True)
+    floor = models.CharField(
+        'Этаж',
+        max_length=3,
+        blank=True,
+        help_text='Первый этаж, последний этаж, цоколь, мансарда и т.д.'
+    )
+
+    rooms_number = models.IntegerField(
+        'Количество комнат',
+        db_index=True
+    )
+    living_area = models.FloatField(
+        'Жилая площадь',
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(0)]
+    )
+    has_balcony = models.NullBooleanField('Балкон', db_index=True)
+    active = models.BooleanField('Активно', db_index=True)
+    construction_year = models.IntegerField(
+        'Год постройки здания',
+        validators=[
+            MinValueValidator(1000),
+            MaxValueValidator(9999)
+        ],
+        db_index=True
+    )
+    new_building = models.BooleanField(
+        'Новостройка',
+        null=True,
+        blank=True,
+        db_index=True
+    )
+
+    liked_by = models.ManyToManyField(
+        User,
+        related_name="liked_flats",
+        verbose_name="Кто лайкнул",
+        blank=True
+    )
+
+    owner_pure_phone = PhoneNumberField(
+        'Нормализованный номер владельца',
+        blank=True
+    )
+    owner = models.CharField(
+        'ФИО владельца',
+        max_length=200,
+        db_index=True,
+        blank=True
+    )
+    owners_phonenumber = models.CharField(
+        'Номер владельца',
+        max_length=20,
+        blank=True
+    )
 
     def __str__(self):
-        return f'{self.town}, {self.address} ({self.price}р.)'
+        return f"{self.town}, {self.address} ({self.price} руб.)"
 
 
 class Complaint(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь', related_name='complaints')
-    flat = models.ForeignKey(Flat, on_delete=models.CASCADE, verbose_name='Квартира', related_name='complaints')
+    complainant = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор жалобы',
+        related_name='filed_complaints'
+    )
+    flat = models.ForeignKey(
+        Flat,
+        on_delete=models.CASCADE,
+        verbose_name='Квартира'
+    )
     text = models.TextField('Текст жалобы')
+
+    def __str__(self):
+        return f"Жалоба от {self.complainant} на квартиру {self.flat}"
 
 
 class Owner(models.Model):
-    name = models.CharField('ФИО владельца', max_length=200)
-    phonenumber = models.CharField('Номер владельца', max_length=20)
-    pure_phone = PhoneNumberField('Нормализованный номер владельца', blank=True, null=True)
-    owned_flats = models.ManyToManyField(Flat, related_name='owned_by', verbose_name='Квартиры', blank=True)
+    full_name = models.CharField(
+        'ФИО владельца',
+        max_length=200,
+        db_index=True
+    )
+    phone_number = models.CharField(
+        'Номер владельца',
+        max_length=20,
+        blank=True
+    )
+    pure_phone = PhoneNumberField(
+        'Нормализованный номер владельца',
+        blank=True
+    )
+    flats = models.ManyToManyField(
+        Flat,
+        related_name='owners',
+        verbose_name='Квартиры'
+    )
 
     def __str__(self):
-        return self.name
+        return self.full_name
