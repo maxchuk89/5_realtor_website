@@ -1,10 +1,10 @@
 from django.db import migrations
-import phonenumbers
-from phonenumbers import PhoneNumberFormat, format_number
 
 
 def normalize_phones(apps, schema_editor):
     Flat = apps.get_model("property", "Flat")
+    import phonenumbers
+    from phonenumbers import PhoneNumberFormat, format_number
 
     qs = (
         Flat.objects
