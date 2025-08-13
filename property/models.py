@@ -9,33 +9,12 @@ class Flat(models.Model):
         auto_now_add=True,
         db_index=True
     )
-    description = models.TextField(
-        'Текст объявления',
-        blank=True
-    )
-    price = models.IntegerField(
-        'Цена квартиры',
-        db_index=True
-    )
-    town = models.CharField(
-        'Город',
-        max_length=50,
-        db_index=True
-    )
-    town_district = models.CharField(
-        'Район города',
-        max_length=50,
-        blank=True
-    )
-    address = models.TextField(
-        'Адрес',
-        blank=True
-    )
-    floor = models.CharField(
-        'Этаж',
-        max_length=3,
-        blank=True
-    )
+    description = models.TextField('Текст объявления', blank=True)
+    price = models.IntegerField('Цена квартиры', db_index=True)
+    town = models.CharField('Город', max_length=50, db_index=True)
+    town_district = models.CharField('Район города', max_length=50, blank=True)
+    address = models.TextField('Адрес', blank=True)
+    floor = models.CharField('Этаж', max_length=3, blank=True)
     rooms_number = models.IntegerField(
         'Количество комнат',
         db_index=True,
@@ -43,7 +22,7 @@ class Flat(models.Model):
         null=True
     )
     living_area = models.FloatField(
-        'жилая площадь кв.м',
+        'Жилая площадь кв.м',
         blank=True,
         null=True
     )
@@ -58,10 +37,7 @@ class Flat(models.Model):
     )
     construction_year = models.IntegerField(
         'Год постройки здания',
-        validators=[
-            MinValueValidator(1000),
-            MaxValueValidator(9999)
-        ],
+        validators=[MinValueValidator(1000), MaxValueValidator(9999)],
         db_index=True,
         blank=True,
         null=True
